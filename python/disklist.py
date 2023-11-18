@@ -28,7 +28,7 @@ def main():
         ####   2. List that directory instead of the root
 
         for entry in root.values():
-            # print("Directory entry:", i, entry['filename'])
+            # print("Directory entry:", entry['filename'], entry['status'])
             # print("Starting block:", entry['start_block'])
             # print(f'{entry["num_blocks"]} total blocks')
 
@@ -37,7 +37,7 @@ def main():
                 file_type = "F"
 
             # subdirectory
-            elif entry['status'] == 1:
+            elif entry['status'] == 5:
                 file_type = "D"
 
             # neither file nor directory

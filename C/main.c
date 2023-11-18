@@ -15,15 +15,23 @@ int main ( int argc, char *argv[] )
     int blockCount = BLOCK_COUNT;
     char ch = 'A';
 
+    // char c[4] = "abc";
+    // char ah = 'a';
+    // printf("%s\n", c);
+    // printf("%c\n", c);
+    // printf("%c\n", *c);
+    // printf("%c\n", ah);
+    // printf("%p\n", c);
+
     if ( argc != 4 )
     {
-        printf("Usage: makefile filename size character\n");
+        printf("argc = %d : Usage: makefile filename size character\n", argc);
         return 0;
     }
 
     FILE *file = fopen (argv[1], "wb");
 
-    if ( !file )
+    if ( !file ) 
     {
         printf("Couldn't create: %s\n", argv[1]);
         return 0;
@@ -41,6 +49,7 @@ int main ( int argc, char *argv[] )
         fwrite (buffer, BUFFER_SIZE, 1, file);
         ch++;
     }
+
     fclose (file);
 
     return 0;
