@@ -54,7 +54,7 @@ def get_root_directory(f, block_size, root_dir_start, root_dir_blocks) -> dict:
 
     # go to start of root and read until the end.
     f.seek(root_dir_start * block_size, 0)
-    for i in range(root_dir_blocks):
+    for i in range(root_dir_blocks*512 // 64):
         status = int.from_bytes(f.read(1), 'big')
         starting_block = int.from_bytes(f.read(4), 'big')
         num_blocks = int.from_bytes(f.read(4), 'big')
