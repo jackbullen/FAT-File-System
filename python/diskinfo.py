@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 import sys
-from utils import get_boot_sector, get_fat_info, get_root_directory
+from utils import get_boot_sector, get_fat_info
 
 def main():
     if len(sys.argv) != 2:
@@ -21,8 +21,7 @@ def main():
         print("Root directory start:", root_dir_start)
         print("Root directory blocks:", root_dir_blocks)
         print("==============")
-        root = get_root_directory(f, block_size, root_dir_start, root_dir_blocks)
-        get_fat_info(f, fat_start, fat_blocks, block_size, root, verbose=True)
+        get_fat_info(f, fat_start, fat_blocks, block_size, verbose=True)
 
 if __name__ == "__main__":
     main()
