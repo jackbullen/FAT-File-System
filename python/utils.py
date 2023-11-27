@@ -147,7 +147,6 @@ def get_subdirs(f, file_system, subdirs, parent, block_size, fat, root_dir_block
         subdir_entries = get_directory(subdir_blocks, block_size, root_dir_blocks)
         file_entries = [file for file in subdir_entries if file['status'] == 3]
         subdir_subdirs = [dir for dir in subdir_entries if dir['status'] == 5]
-
         files = {}
         for file in file_entries:
             files[file['file_name']] = get_linked_blocks(f, file   ['num_blocks'], block_size, file['start_block'], fat)
@@ -162,27 +161,27 @@ def get_subdirs(f, file_system, subdirs, parent, block_size, fat, root_dir_block
 
     return file_system
 
-def get_file_system(root_dir_blocks, block_size, fat, root_dir_start):
+def get_file_system(f, root_dir_blocks, block_size, fat, root_dir_start):
     '''
         Return file system where keys are all directories with absolute paths
     '''
     file_system = dict()
-    with open('/Users/jackbullen/Downloads/subdirs.img', "rb") as f:
-        root_blocks = get_linked_blocks(f, root_dir_blocks, block_size, root_dir_start, fat)
-        root_entries = get_directory(root_blocks, block_size, root_dir_blocks)
-        file_entries = [file for file in root_entries if file['status'] == 3]
-        subdir_entries = [dir for dir in root_entries if dir['status'] == 5]
+    
+    root_blocks = get_linked_blocks(f, root_dir_blocks, block_size, root_dir_start, fat)
+    root_entries = get_directory(root_blocks, block_size, root_dir_blocks)
+    file_entries = [file for file in root_entries if file['status'] == 3]
+    subdir_entries = [dir for dir in root_entries if dir['status'] == 5]
 
-        files = {}
-        for file in file_entries:
-            files[file['file_name']] = get_linked_blocks(f, file   ['num_blocks'], block_size, file['start_block'], fat)
+    files = {}
+    for file in file_entries:
+        files[file['file_name']] = get_linked_blocks(f, file   ['num_blocks'], block_size, file['start_block'], fat)
 
-        file_system['/'] = {
-                                'entries': root_entries,
-                                'files': files
-                            }
+    file_system['/'] = {
+                            'entries': root_entries,
+                            'files': files
+                        }
 
-        file_system = get_subdirs(f, file_system, subdir_entries, '/', block_size, fat, root_dir_blocks)
+    file_system = get_subdirs(f, file_system, subdir_entries, '/', block_size, fat, root_dir_blocks)
 
     return file_system
 

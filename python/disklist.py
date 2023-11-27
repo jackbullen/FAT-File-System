@@ -16,8 +16,13 @@ def main():
         fat = get_fat_info(f, fat_start, fat_blocks, block_size)
 
         # Get the file system and print the entries for requested directory_path
-        file_system = get_file_system(root_dir_blocks, block_size, fat, root_dir_start)
-        print_entries(file_system[directory_path]['entries'])
+        file_system = get_file_system(f, root_dir_blocks, block_size, fat, root_dir_start)
+    
+        try:
+            entries = file_system[directory_path]['entries']
+            print_entries(entries)
+        except KeyError:
+            sys.stderr.write("Directory not found\n")
 
 if __name__ == "__main__":
     main()

@@ -16,15 +16,21 @@ def main():
         os_name, block_size, block_count, fat_start, fat_blocks, root_dir_start, root_dir_blocks = get_boot_sector(f)
         fat = get_fat_info(f, fat_start, fat_blocks, block_size)
 
-        file_system = get_file_system(root_dir_blocks, block_size, fat, root_dir_start)
+        file_system = get_file_system(f, root_dir_blocks, block_size, fat, root_dir_start)
 
         path = file_path.split('/')[:-1]
         dir = '/'.join(path)
 
         file_name = file_path.split('/')[-1]
 
+        try:
+            file_bytes = file_system[dir]['files'][file_name]
+        except KeyError:
+            sys.stderr.write("File not found\n")
+            sys.exit(1)
+
         with open(destination_path, 'wb') as destination:
-            destination.write(file_system[dir]['files'][file_name])
+            destination.write(file_bytes)
 
 if __name__ == "__main__":
     main()
