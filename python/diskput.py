@@ -1,8 +1,7 @@
 #! /usr/bin/env python3
 import sys
-import time
-from utils import (get_boot_sector, get_fat_info, write_file_to_disk, 
-                   update_fat, update_directory, find_directory_entry, write_directory_entry)
+from utils import (get_boot_sector, get_fat_info, get_file_system,
+                   write_file_to_disk, update_fat, update_directory)
 
 def main():
     if len(sys.argv) != 4:
@@ -18,10 +17,16 @@ def main():
             os_name, block_size, block_count, fat_start, fat_blocks, root_dir_start, root_dir_blocks = get_boot_sector(f)
             fat = get_fat_info(f, fat_start, fat_blocks, block_size)
             file_data = source_file.read()
+            file_system = get_file_system(f, root_dir_blocks, block_size, fat, root_dir_start)
 
+            # 1. Write the file into the blocks
             start_block = write_file_to_disk(f, file_data, fat, block_size, root_dir_start, root_dir_blocks)
-            update_fat(f, fat, fat_start, block_size)
-            update_directory(f, destination_path, file_data, start_block, block_size, root_dir_start, root_dir_blocks)
+            
+            # 2. Update the FAT
+            update_fat(f, fat, fat_start, block_size) 
+
+            # 3. Update the directory
+            update_directory(f, destination_path, file_data, start_block, block_size, file_system, root_dir_start, root_dir_blocks) 
 
     except FileNotFoundError:
         sys.stderr.write("Error: File or image not found.\n")

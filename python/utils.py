@@ -1,3 +1,5 @@
+import time
+
 BOOT_SECTOR_SIZE = 512
 
 def get_boot_sector(f):
@@ -204,3 +206,109 @@ def print_entries(entries):
         creation_time = entry['creation_time']
 
         print(f"{file_type} {file_size} {file_name} {creation_time}")
+
+def write_file_to_disk(f, file_data, fat, block_size, root_dir_start, root_dir_blocks):
+    '''
+        Write a file to the blocks on disk
+    '''
+    # Calculate the number of blocks needed
+    num_blocks_needed = (len(file_data) + block_size - 1) // block_size
+
+    # Find free blocks
+    free_blocks = [k for k, v in fat.items() if v == 0x00][:num_blocks_needed]
+    # print(free_blocks, num_blocks_needed)
+    if len(free_blocks) < num_blocks_needed:
+        raise Exception("Not enough free space on the disk")
+
+    # Write data to the blocks
+    for i, block in enumerate(free_blocks):
+        f.seek(block * block_size)
+        # print(f"Going to write at block {block}", file_data[i * block_size:(i + 1) * block_size])
+        f.write(file_data[i * block_size:(i + 1) * block_size])
+
+        # Update FAT in-memory (linking blocks)
+        if i < len(free_blocks) - 1:
+            fat[block] = free_blocks[i + 1]
+        else:
+            # Mark the last block in the FAT
+            fat[block] = 0xFFFFFFFE  # End of file marker
+    
+    return free_blocks[0]
+
+def update_fat(f, fat, fat_start, block_size):
+    '''
+        Update the FAT when writing a file to disk
+    '''
+    f.seek(fat_start * block_size)
+    for entry in fat.values():
+        # print(entry.to_bytes(4, byteorder='big'))
+        f.write(entry.to_bytes(4, byteorder='big'))
+
+def update_directory(f, destination_path, file_data, start_block, block_size, file_system, root_dir_start, root_dir_blocks):
+    '''
+        Update the directory entry when writing a file to disk
+    '''
+    # Split the destination path to get directory and filename
+    path_parts = destination_path.split('/')
+    dir_path = '/'.join(path_parts[:-2])
+    the_dir = path_parts[-2]
+    file_name = path_parts[-1]
+
+    # Find the directory entry
+    if dir_path == '':
+        dir_path = '/'
+
+        # print(file_system[dir_path]['entries'])
+        directory_entry = {'start_block': root_dir_start, 'num_blocks': root_dir_blocks, 'file_name': '/'}
+    else:
+        directory_entry = [x for x in file_system[dir_path]['entries'] if x['file_name'] == the_dir][0]
+
+    f.seek(directory_entry['start_block'] * block_size)
+    status = -1
+    while status != 0:
+        status = int.from_bytes(f.read(1), 'big')
+        if status != 0:
+            f.read(63)
+
+    # seek back one byte, so we put the file entry in the right place
+    f.seek(-1, 1)
+    
+    # write in a 3 for status 
+    f.write(b'\x03')
+
+    f.write(start_block.to_bytes(4, byteorder='big'))
+
+    num_blocks = (len(file_data) + block_size - 1) // block_size
+    f.write(num_blocks.to_bytes(4, byteorder='big'))
+
+    file_size = len(file_data)
+    f.write(file_size.to_bytes(4, byteorder='big'))
+
+    current_time = time.localtime()
+    year, month, day, hour, minute, second = current_time.tm_year, current_time.tm_mon, current_time.tm_mday, current_time.tm_hour, current_time.tm_min, current_time.tm_sec
+    # Write creation times
+    f.write(year.to_bytes(2, byteorder='big'))
+    f.write(month.to_bytes(1, byteorder='big'))
+    f.write(day.to_bytes(1, byteorder='big'))
+    f.write(hour.to_bytes(1, byteorder='big'))
+    f.write(minute.to_bytes(1, byteorder='big'))
+    f.write(second.to_bytes(1, byteorder='big'))
+    # Modification times
+    f.write(year.to_bytes(2, byteorder='big'))
+    f.write(month.to_bytes(1, byteorder='big'))
+    f.write(day.to_bytes(1, byteorder='big'))
+    f.write(hour.to_bytes(1, byteorder='big'))
+    f.write(minute.to_bytes(1, byteorder='big'))
+    f.write(second.to_bytes(1, byteorder='big'))
+
+    filename_bytes = file_name.encode('utf-8')
+    # Ensure that the filename does not exceed 31 bytes
+    if len(filename_bytes) > 31:
+        raise ValueError("Filename is too long.")
+    null_bytes_needed = 31 - len(filename_bytes)
+
+    f.write(filename_bytes)
+    f.write(b'\x00' * null_bytes_needed)
+
+    filler = b'\xFF' * 6
+    f.write(filler)

@@ -21,8 +21,9 @@ def main():
         path = file_path.split('/')[:-1]
         dir = '/'.join(path)
 
+        if dir == '':
+            dir = '/'
         file_name = file_path.split('/')[-1]
-
         try:
             file_bytes = file_system[dir]['files'][file_name]
         except KeyError:
@@ -30,7 +31,7 @@ def main():
             sys.exit(1)
 
         with open(destination_path, 'wb') as destination:
-            destination.write(file_bytes)
+            destination.write(file_bytes.strip(b'\x00'))
 
 if __name__ == "__main__":
     main()

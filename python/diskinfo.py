@@ -11,8 +11,8 @@ def main():
     with open(filename, "rb") as f:
         os_name, block_size, block_count, fat_start, fat_blocks, root_dir_start, root_dir_blocks = get_boot_sector(f)
 
-        print(os_name)
-        print("==============")
+        # print(os_name)
+        # print("==============")
         print("Super block information")
         print("Block size:", block_size)
         print("Block count:", block_count)
@@ -20,7 +20,8 @@ def main():
         print("FAT blocks:", fat_blocks)
         print("Root directory start:", root_dir_start)
         print("Root directory blocks:", root_dir_blocks)
-        print("==============")
+        print()
+        # print("==============")
         get_fat_info(f, fat_start, fat_blocks, block_size, verbose=True)
 
 if __name__ == "__main__":

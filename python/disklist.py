@@ -17,7 +17,6 @@ def main():
 
         # Get the file system and print the entries for requested directory_path
         file_system = get_file_system(f, root_dir_blocks, block_size, fat, root_dir_start)
-    
         try:
             entries = file_system[directory_path]['entries']
             print_entries(entries)
